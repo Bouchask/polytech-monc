@@ -38,4 +38,4 @@ Catalogue price ranges, ratings, technician profiles, reviews, availability, and
 
 ## Checks
 
-Run `npm run typecheck` to validate strict TypeScript. `npx expo lint` can be used once an Expo lint configuration is added.
+Run `npm run typecheck` and `npm run lint` for strict TypeScript and Expo lint checks.
