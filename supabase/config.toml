@@ -1,0 +1,40 @@
+project_id = "hbtomuldizmrmjgmwpiy"
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+enabled = true
+enable_signup = true
+
+[auth.email]
+enable_confirmations = true
+
+# Local Supabase Auth sends confirmation codes through the configured SMTP
+# provider when these values are set in the root .env file. Keep credentials
+# out of this tracked config file.
+[auth.email.smtp]
+host = "env(PALESSO_AUTH_EMAIL_SMTP_HOST)"
+port = 587
+user = "env(PALESSO_AUTH_EMAIL_SMTP_USER)"
+pass = "env(PALESSO_AUTH_EMAIL_SMTP_PASS)"
+admin_email = "env(PALESSO_AUTH_EMAIL_FROM)"
+sender_name = "env(PALESSO_AUTH_EMAIL_SENDER_NAME)"
+
+[auth.email.template.confirmation]
+subject = "Votre code de confirmation Palesso"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.rate_limit]
+email_sent = 5
+token_verifications = 10
+
+[auth.sms]
+enable_signup = false
+
+[functions.health]
+verify_jwt = false
+
+# All other user-facing functions require a valid Supabase user JWT. The platform
+# verifies it before the @supabase/server user context applies row-level security.

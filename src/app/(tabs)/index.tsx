@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { categories, serviceItems } from '../../data/catalog';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../store/AppStore';
-import { C, Card, Photo, Screen, SectionTitle } from '../../components/ui';
-export default function Home(){const {user,notifications}=useAppStore();return <Screen><View style={{flexDirection:'row',alignItems:'center',marginBottom:18}}><View style={{flex:1}}><Text style={{fontSize:12,color:C.muted}}>Votre maison, en de bonnes mains</Text><Text style={{fontSize:21,fontWeight:'800',color:C.navy,marginTop:3}}>Bonjour{user?`, ${user.name.split(' ')[0]}`:''} 👋</Text></View><Pressable onPress={()=>router.push('/(tabs)/alerts')} style={{height:46,width:46,borderRadius:15,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'}}><Ionicons name="notifications-outline" size={22} color={C.navy}/>{notifications.some(n=>!n.read)&&<View style={{position:'absolute',right:9,top:9,width:8,height:8,borderRadius:4,backgroundColor:C.red}}/>}</Pressable></View>
-<Pressable onPress={()=>router.push('/addresses')} style={{flexDirection:'row',alignItems:'center',marginBottom:18}}><Ionicons name="location" size={18} color={C.blue}/><Text style={{marginLeft:6,color:C.text,fontWeight:'700'}}>Maarif, Casablanca</Text><Ionicons name="chevron-down" size={16} color={C.muted}/></Pressable>
-<Pressable onPress={()=>router.push('/search')} style={{height:54,backgroundColor:'#fff',borderRadius:16,borderWidth:1,borderColor:C.line,flexDirection:'row',alignItems:'center',paddingHorizontal:16,marginBottom:20}}><Ionicons name="search" size={19} color={C.muted}/><Text style={{marginLeft:10,color:'#94A4B0',fontSize:15}}>Quel service recherchez-vous ?</Text></Pressable>
-<Card style={{backgroundColor:C.navy,borderWidth:0,padding:20,overflow:'hidden'}}><Text style={{fontSize:12,fontWeight:'700',color:'#A9DDF1',letterSpacing:1}}>PALLESSO · DÉMO</Text><Text style={{fontSize:23,fontWeight:'800',color:'#fff',marginTop:10,maxWidth:245}}>Un souci à la maison ?</Text><Text style={{fontSize:14,color:'#D4E2EA',marginTop:6,maxWidth:240,lineHeight:21}}>Trouvez un professionnel et comparez ses offres.</Text><Pressable onPress={()=>router.push('/booking/category')} style={{backgroundColor:C.cyan,borderRadius:13,paddingVertical:12,paddingHorizontal:15,alignSelf:'flex-start',marginTop:16}}><Text style={{fontWeight:'800',color:'#fff'}}>Faire une demande  →</Text></Pressable><Ionicons name="home" size={82} color="#FFFFFF20" style={{position:'absolute',right:6,bottom:3}}/></Card>
-<SectionTitle title="Nos services" action="Tout voir" onAction={()=>router.push('/search')}/><View style={{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between'}}>{categories.map(c=><Pressable accessibilityRole="button" key={c.id} onPress={()=>router.push(`/category/${c.id}`)} style={{width:'48%',height:136,borderRadius:18,overflow:'hidden',backgroundColor:c.color,marginBottom:12}}><Photo uri={c.image} style={{width:'100%',height:'100%',position:'absolute',opacity:.35}} resizeMode="cover"/><View style={{flex:1,justifyContent:'space-between',padding:12,backgroundColor:'#FFFFFF35'}}><View style={{width:36,height:36,borderRadius:12,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'}}><Ionicons name={c.icon as any} size={20} color={C.blue}/></View><Text style={{fontWeight:'800',fontSize:15,color:C.navy}}>{c.name}</Text></View></Pressable>)}</View>
-<SectionTitle title="Populaires près de vous" action="Explorer" onAction={()=>router.push('/search')}/>{serviceItems.slice(0,3).map(s=><Pressable key={s.id} onPress={()=>{router.push(`/category/${s.categoryId}`);}}><Card style={{padding:0,overflow:'hidden',flexDirection:'row',alignItems:'center'}}><Photo uri={s.image} style={{width:94,height:92}} resizeMode="cover"/><View style={{flex:1,padding:12}}><Text style={{fontSize:15,fontWeight:'800',color:C.text}}>{s.name}</Text><Text style={{fontSize:12,color:C.muted,marginTop:5}}>Estimation · {s.min}–{s.max} MAD</Text></View><Ionicons name="chevron-forward" size={18} color={C.muted} style={{marginRight:12}}/></Card></Pressable>)}
-<Card style={{marginTop:6,backgroundColor:'#E7F5EF',borderColor:'#D7ECE2'}}><View style={{flexDirection:'row',alignItems:'center'}}><Ionicons name="shield-checkmark" size={23} color={C.green}/><Text style={{marginLeft:10,fontWeight:'800',color:C.navy,fontSize:15}}>Un parcours plus serein</Text></View><Text style={{marginTop:8,color:C.muted,lineHeight:21}}>Comparez les offres et choisissez l’artisan qui vous convient. Les profils et demandes sont simulés pour cette démo.</Text></Card></Screen>}
+import { C, Screen } from '../../components/ui';
+import LocationPickerSheet from '../../components/home/LocationPickerSheet';
+import RadialServiceDiscovery from '../../components/home/RadialServiceDiscovery';
+import type { HomeLocation } from '../../data/homeMockData';
+
+export default function Home() {
+  const { homeLocation, setHomeLocation, setDraft, notifications } = useAppStore();
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [locationMode, setLocationMode] = useState<'search' | 'map'>('search');
+  const [locationSession, setLocationSession] = useState(0);
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
+  const selectedLocation: HomeLocation = { id: homeLocation.id, label: homeLocation.label, address: homeLocation.address, latitude: homeLocation.latitude, longitude: homeLocation.longitude };
+
+  const chooseLocation = (location: HomeLocation) => {
+    const address = { id: location.id, label: location.label, address: location.address, latitude: location.latitude, longitude: location.longitude };
+    setHomeLocation(address);
+    setDraft({ address });
+  };
+  const openLocation = (mode: 'search' | 'map') => { setLocationMode(mode); setLocationSession((key) => key + 1); setLocationOpen(true); };
+
+  return <Screen backgroundColor="#F4F8FC">
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 53 }}>
+      <Pressable accessibilityRole="search" accessibilityLabel={`Rechercher une ville ou une adresse. Sélectionnée : ${homeLocation.address}`} onPress={() => openLocation('search')} style={{ flex: 1, height: 52, flexDirection: 'row', alignItems: 'center', borderRadius: 17, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, shadowColor: C.navy, shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 1 }}>
+        <Ionicons name="location" size={18} color={C.blue} /><View style={{ flex: 1, marginLeft: 9 }}><Text style={{ color: C.muted, fontSize: 9.5, fontWeight: '600' }}>VOTRE POSITION</Text><Text numberOfLines={1} style={{ color: C.navy, fontWeight: '800', fontSize: 13, marginTop: 2 }}>{homeLocation.address}</Text></View><Ionicons name="search" size={17} color={C.muted} />
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Choisir la position sur la carte" onPress={() => openLocation('map')} style={{ width: 43, height: 48, borderRadius: 15, backgroundColor: '#E7F4FA', alignItems: 'center', justifyContent: 'center', marginLeft: 7 }}><Ionicons name="map-outline" size={19} color={C.blue} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={unreadCount ? `Alertes, ${unreadCount} non lues` : 'Alertes'} onPress={() => router.push('/(tabs)/alerts')} style={{ width: 43, height: 48, borderRadius: 15, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center', marginLeft: 7 }}><Ionicons name="notifications-outline" size={19} color={C.navy} />{unreadCount > 0 && <View style={{ position: 'absolute', top: 6, right: 6, minWidth: 15, height: 15, borderRadius: 8, backgroundColor: C.red, borderWidth: 2, borderColor: C.white, alignItems: 'center', justifyContent: 'center' }}>{unreadCount < 10 && <Text style={{ color: C.white, fontSize: 8, fontWeight: '800' }}>{unreadCount}</Text>}</View>}</Pressable>
+    </View>
+    <RadialServiceDiscovery />
+    <LocationPickerSheet key={locationSession} visible={locationOpen} selectedLocation={selectedLocation} initialMode={locationMode} onClose={() => setLocationOpen(false)} onSelect={chooseLocation} />
+  </Screen>;
+}

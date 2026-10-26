@@ -1,2 +1,43 @@
-import React from 'react';import {Text,View} from 'react-native';import {router,useLocalSearchParams} from 'expo-router';import {Ionicons} from '@expo/vector-icons';import {categories,serviceItems,typesByCategory} from '../../data/catalog';import {useAppStore} from '../../store/AppStore';import {C,Card,Header,Photo,Screen,Button,SectionTitle} from '../../components/ui';
-export default function CategoryPage(){const {id}=useLocalSearchParams<{id:string}>();const c=categories.find(x=>x.id===id)??categories[0];const items=serviceItems.filter(x=>x.categoryId===c.id);const {setDraft}=useAppStore();return <Screen><Header title={c.name}/><View style={{height:176,borderRadius:22,overflow:'hidden',marginBottom:18}}><Photo uri={c.image} style={{width:'100%',height:'100%'}} resizeMode="cover"/><View style={{position:'absolute',inset:0,backgroundColor:'#18324755',padding:18,justifyContent:'flex-end'}}><Text style={{color:'#fff',fontSize:23,fontWeight:'800'}}>{c.name}</Text><Text style={{color:'#fff',marginTop:4}}>{c.description}</Text></View></View><SectionTitle title="Types de service"/>{(typesByCategory[c.id]??[]).map((t,i)=><Card key={t} onPress={()=>{setDraft({categoryId:c.id,serviceTypes:[t],serviceIds:[]});router.push('/booking/items')}} style={{flexDirection:'row',alignItems:'center'}}><View style={{width:42,height:42,borderRadius:14,backgroundColor:c.color,alignItems:'center',justifyContent:'center'}}><Ionicons name={['water-outline','flash-outline','construct-outline'][i%3] as any} size={21} color={C.blue}/></View><Text style={{fontWeight:'800',color:C.text,marginLeft:12,flex:1}}>{t}</Text><Ionicons name="chevron-forward" size={18} color={C.muted}/></Card>)}<SectionTitle title="Prestations populaires"/>{items.slice(0,3).map(s=><Card key={s.id} onPress={()=>{setDraft({categoryId:c.id,serviceTypes:[s.type],serviceIds:[s.id]});router.push('/booking/location')}} style={{padding:0,overflow:'hidden',flexDirection:'row',alignItems:'center'}}><Photo uri={s.image} style={{width:92,height:90}} resizeMode="cover"/><View style={{flex:1,padding:12}}><Text style={{fontWeight:'800',color:C.text}}>{s.name}</Text><Text style={{fontSize:12,color:C.blue,fontWeight:'700',marginTop:6}}>{s.min}–{s.max} MAD · estimation</Text></View></Card>)}<Button title="Faire une demande" onPress={()=>{setDraft({categoryId:c.id});router.push('/booking/type')}}/></Screen>}
+import React, { useCallback, useEffect } from 'react';
+import { Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppStore, useBookingDraftActions, useCatalogStore } from '../../store/AppStore';
+import { C, Header, Screen } from '../../components/ui';
+import ServiceTypeGrid from '../../components/catalog/ServiceTypeGrid';
+import ServiceTypeNavigation from '../../components/catalog/ServiceTypeNavigation';
+import blurFocusedWebElement from '../../utils/blurFocusedWebElement';
+
+export default function CategoryPage() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { draft } = useAppStore();
+  const { setDraft, toggleServiceType } = useBookingDraftActions();
+  const { categories } = useCatalogStore();
+  const category = categories.find((item) => item.id === id) ?? categories[0];
+  const selectedTypes = draft.categoryId === category.id ? draft.serviceTypes : [];
+
+  useEffect(() => {
+    if (draft.categoryId !== category.id) setDraft({ categoryId: category.id, serviceTypes: [], serviceIds: [] });
+  }, [category.id, draft.categoryId, setDraft]);
+
+  const toggleType = useCallback((type: string) => toggleServiceType(category.id, type), [category.id, toggleServiceType]);
+
+  return <Screen>
+    <Header title={category.name} />
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
+      <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: category.color, alignItems: 'center', justifyContent: 'center', marginRight: 11 }}>
+        <Ionicons name={category.icon as never} size={21} color={C.blue} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: C.navy, fontSize: 16, fontWeight: '800' }}>Quel service vous faut-il ?</Text>
+        <Text style={{ color: C.muted, fontSize: 12, marginTop: 3 }}>Choisissez une ou plusieurs options.</Text>
+      </View>
+    </View>
+    <ServiceTypeGrid categoryId={category.id} selectedTypes={selectedTypes} onToggle={toggleType} />
+    <ServiceTypeNavigation
+      canContinue={selectedTypes.length > 0}
+      onBack={() => { blurFocusedWebElement(); router.back(); }}
+      onNext={() => { blurFocusedWebElement(); router.push('/booking/items'); }}
+    />
+  </Screen>;
+}

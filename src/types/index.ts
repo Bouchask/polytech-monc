@@ -1,11 +1,11 @@
-export type RequestStatus = 'PUBLISHED' | 'OFFERS_RECEIVED' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'NOT_SELECTED';
+export type RequestStatus = 'PUBLISHED' | 'OFFERS_RECEIVED' | 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
+export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'NOT_SELECTED' | 'REJECTED' | 'WITHDRAWN';
 export type Category = { id: string; name: string; icon: string; image: string; description: string; color: string };
-export type ServiceItem = { id: string; categoryId: string; type: string; name: string; description: string; min: number; max: number; image: string };
-export type Address = { id: string; label: string; address: string; details?: string };
+export type ServiceItem = { id: string; categoryId: string; type: string; name: string; description: string; min?: number; max?: number; image: string };
+export type Address = { id: string; label: string; address: string; details?: string; latitude?: number; longitude?: number };
 export type Technician = { id: string; name: string; specialty: string; rating: number; reviews: number; jobs: number; experience: number; bio: string; avatar: string };
 export type Offer = { id: string; requestId: string; technicianId: string; price: number; message: string; availability: string; status: OfferStatus };
-export type RequestMedia = { id: string; uri: string; type: 'image' | 'video' | 'audio'; name: string };
+export type RequestMedia = { id: string; uri: string; type: 'image' | 'video' | 'audio'; name: string; durationMs?: number; fileSize?: number };
 export type ServiceRequest = { id: string; ref: string; categoryId: string; serviceNames: string[]; description: string; address: Address; createdAt: string; status: RequestStatus; urgency: 'urgent' | 'scheduled'; schedule?: string; allDay?: boolean; media: RequestMedia[]; offerIds: string[]; acceptedOfferId?: string };
 export type AppNotification = { id: string; title: string; body: string; kind: 'offer' | 'appointment' | 'status'; requestId?: string; createdAt: string; read: boolean };
 export type BookingDraft = { categoryId?: string; serviceTypes: string[]; serviceIds: string[]; customService?: string; description: string; address?: Address; media: RequestMedia[]; urgency?: 'urgent' | 'scheduled'; schedule?: string; allDay?: boolean };
